@@ -2,75 +2,135 @@ import streamlit as st
 import pandas as pd
 import io
 
-# --- 1. CONFIGURATION & BRANDING ---
+# ==========================================
+# TEXT CONFIGURATION
+# ==========================================
+APP_CONFIG = {
+    "title": "Product Mix Analyzer",
+    
+    # Exciting, benefit-driven description
+    "subtitle": """
+    Discover hidden revenue opportunities in your order data. 
+    Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
+    """,
+    
+    "privacy_notice": "**Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
+    
+    # Sidebar Text
+    "sidebar_header": "Settings",
+    "id_mode_label": "How to identify products:",
+    "id_mode_help": "Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt').",
+    
+    "ignore_header": "2. Ignore Items",
+    "ignore_caption": "Filters applied before calculating mixes (e.g., gift cards, freebies).",
+    
+    # Branding
+    "brand_header": "Powered by Systematik",
+    "brand_info": "Full-stack data agency for ecommerce brands earning $5M-100M annually.",
+    "brand_email": "info@systematikdata.com",
+    
+    # Instructions
+    "instructions_title": "Instructions & Video Tutorial",
+    "video_link": "https://www.youtube.com", # Update this link later
+    "video_text": "Watch the video walkthrough",
+    
+    "instructions_intro": """
+    **How it works**
+    1. Upload your "Raw Orders" export below.
+    2. The tool automatically cleans the data (removes canceled orders, applies filters).
+    3. You get two instant reports:
+        * **Order Product Mix:** The most popular product combinations.
+        * **First Order Mix:** What customers buy in their very first order.
+    """,
+    
+    "success_msg": "Analysis Complete. Processed {n} orders.",
+    "error_msg": "Error: Could not detect an 'Order ID' column. Please check your headers."
+}
+
+# ==========================================
+# APP LOGIC
+# ==========================================
+
 st.set_page_config(
-    page_title="Product Mix Analyzer",
-    page_icon="📊",
+    page_title=APP_CONFIG["title"],
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Custom CSS: Fonts, Colors, and Clean UI
-# Fonts: 'Outfit' (Geomanist alternative) for Headers, 'Source Sans Pro' for Body
 hide_streamlit_style = """
 <style>
-    /* 1. Import Google Fonts */
+    /* Import Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&family=Outfit:wght@400;700&display=swap');
-
-    /* 2. Apply Source Sans Pro to the body/text */
-    html, body, [class*="css"] {
-        font-family: 'Source Sans Pro', sans-serif;
-        color: #1A1A1A;
-    }
-
-    /* 3. Apply the Geometric Font (Outfit) to Headers */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Outfit', sans-serif !important;
-        font-weight: 700;
-        color: #1A1A1A !important;
-    }
-
-    /* 4. Custom Styling for Lines/Dividers */
-    hr {
-        border-color: #1A1A1A !important;
-        opacity: 1; /* Make sure it's solid */
-        margin: 2em 0;
-    }
-
-    /* 5. Custom Button Styling (Systematik Purple Pill) */
-    div.stButton > button:first-child {
-        background-color: #7030A0;
-        color: white;
-        border-radius: 4px;
-        border: none;
-        padding: 0.5em 1em;
-        font-weight: 600;
-    }
-    div.stButton > button:hover {
-        background-color: #582480; /* Slightly darker purple on hover */
-        color: white;
-        border-color: #582480;
+    
+    /* Body Styling */
+    html, body, [class*="css"] { 
+        font-family: 'Source Sans Pro', sans-serif; 
+        color: #1A1A1A; 
+        background-color: #F3F3F3; /* Ensure fallback color matches */
     }
     
-    /* 6. Clean up UI (Hide Footer & Menu) */
+    /* Headers (Outfit font) */
+    h1, h2, h3, h4, h5, h6 { 
+        font-family: 'Outfit', sans-serif !important; 
+        font-weight: 700; 
+        color: #1A1A1A !important; 
+    }
+    
+    /* Custom Lines/Dividers */
+    hr { 
+        border-color: #1A1A1A !important; 
+        opacity: 1; 
+        margin: 2em 0; 
+    }
+    
+    /* Button Styling (Purple Pill) */
+    div.stButton > button:first-child { 
+        background-color: #7030A0; 
+        color: white; 
+        border-radius: 4px; 
+        border: none; 
+        padding: 0.5em 1em; 
+        font-weight: 600; 
+    }
+    div.stButton > button:hover { 
+        background-color: #582480; 
+        color: white; 
+        border-color: #582480; 
+    }
+    
+    /* Hide Streamlit Branding */
     footer {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     .stDeployButton {display:none;}
     
-    /* 7. Adjust Expander Borders to be cleaner */
-    .streamlit-expanderHeader {
-        font-family: 'Source Sans Pro', sans-serif;
-        font-weight: 600;
-        color: #1A1A1A;
+    /* Clean up Expander */
+    .streamlit-expanderHeader { 
+        font-family: 'Source Sans Pro', sans-serif; 
+        font-weight: 600; 
+        color: #1A1A1A; 
+        background-color: #F3F3F3;
+    }
+    
+    /* Upload Box Styling - Transparent/Gray to match background */
+    [data-testid="stFileUploader"] {
+        border: 1px dashed #7030A0;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #F3F3F3; /* Matches main background */
+    }
+    
+    /* Sidebar specific tweaks */
+    [data-testid="stSidebar"] {
+        background-color: #F3F3F3;
+        border-right: 1px solid #E0E0E0; /* Subtle separator line */
     }
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Constants & Config
+# Constants
 INCLUDE_PAYMENT_STATUSES = ['paid', 'partially_paid']
-
-# Expanded Column Candidates
 COL_CANDIDATES = {
     'order_id': ['order id', 'name', 'order', 'order number', 'order_id'],
     'customer_id': ['customer id', 'customer_id', 'customer'],
@@ -84,254 +144,172 @@ COL_CANDIDATES = {
     'canceled': ['is canceled order', 'cancelled', 'canceled', 'is_canceled', 'is_cancelled']
 }
 
-# --- 2. HELPER FUNCTIONS ---
+# Helper Functions
 def normalize_header(h):
     return str(h).lower().replace('_', ' ').replace('-', ' ').strip()
 
 def find_column(df_cols, candidates):
-    """Finds the first matching column name from candidates."""
-    # 1. Exact match
     for c in candidates:
-        if c in df_cols:
-            return c
-    # 2. Case-insensitive match
+        if c in df_cols: return c
     lower_cols = {col.lower(): col for col in df_cols}
     for c in candidates:
-        if c.lower() in lower_cols:
-            return lower_cols[c.lower()]
-    # 3. Fuzzy/Normalized match
+        if c.lower() in lower_cols: return lower_cols[c.lower()]
     norm_cols = {normalize_header(col): col for col in df_cols}
     for cand in candidates:
         norm_cand = normalize_header(cand)
         for norm_col, original_col in norm_cols.items():
-            if norm_cand == norm_col:
-                return original_col
+            if norm_cand == norm_col: return original_col
     return None
 
 def parse_money(val):
     if pd.isna(val): return 0.0
     s = str(val).replace(',', '').replace('$', '').strip()
-    if '(' in s and ')' in s:
-        s = '-' + s.replace('(', '').replace(')', '')
-    try:
-        return float(s)
-    except:
-        return 0.0
+    if '(' in s and ')' in s: s = '-' + s.replace('(', '').replace(')', '')
+    try: return float(s)
+    except: return 0.0
 
-# --- 3. SIDEBAR ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header(APP_CONFIG["sidebar_header"])
     
-    # Identifier Mode
     st.subheader("1. Identifier Mode")
     id_mode = st.radio(
-        "How to identify products:",
+        APP_CONFIG["id_mode_label"],
         ('SKU', 'Product + Variant', 'Product Name'),
         index=0,
-        help="Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt')."
+        help=APP_CONFIG["id_mode_help"]
     )
     
     st.divider()
     
-    # Ignore Rules
-    st.subheader("2. Ignore Items")
-    st.caption("Filters applied before calculating mixes (e.g., gift cards, freebies).")
+    st.subheader(APP_CONFIG["ignore_header"])
+    st.caption(APP_CONFIG["ignore_caption"])
     
     ignore_skus_input = st.text_area("Ignore SKUs (Exact match)", height=80, placeholder="GIFT-CARD-001")
     ignore_titles_input = st.text_area("Ignore Product Titles (Contains)", height=80, placeholder="Gift Card")
     ignore_vars_input = st.text_area("Ignore 'Product (Variant)' (Contains)", height=80, placeholder="T-Shirt (Sample)")
 
-    # Process inputs
     ignore_skus = set(x.strip().upper() for x in ignore_skus_input.split('\n') if x.strip() and not x.strip().startswith('#'))
     ignore_titles = [x.strip().lower() for x in ignore_titles_input.split('\n') if x.strip() and not x.strip().startswith('#')]
     ignore_vars = [x.strip().lower() for x in ignore_vars_input.split('\n') if x.strip() and not x.strip().startswith('#')]
 
     st.divider()
 
-    # Systematik Branding
-    st.markdown("### ⚡ Powered by Systematik")
-    st.info("Full-stack data agency for ecommerce brands earning $5M-100M annually.")
-    st.markdown("""
-    **Free Resources:**
-    * [Automated GA4 Audit](https://systematikdata.com)
-    * [Data Strategy Guide](https://systematikdata.com)
-    * [Looker Studio Templates](https://systematikdata.com)
-    
-    Need a custom build?  
-    📧 [info@systematikdata.com](mailto:info@systematikdata.com)
-    """)
+    # Systematik Branding (Purple)
+    st.markdown(f"""
+    <div style="color: #7030A0;">
+        <h3>{APP_CONFIG['brand_header']}</h3>
+        <p><strong>{APP_CONFIG['brand_info']}</strong></p>
+        <p><strong>Free Resources:</strong></p>
+        <ul>
+            <li><a href="https://systematikdata.com" style="color: #7030A0;">Automated GA4 Audit</a></li>
+            <li><a href="https://systematikdata.com" style="color: #7030A0;">Data Strategy Guide</a></li>
+            <li><a href="https://systematikdata.com" style="color: #7030A0;">Looker Studio Templates</a></li>
+        </ul>
+        <p>Need a custom build?<br>
+        <a href="mailto:{APP_CONFIG['brand_email']}" style="color: #7030A0;">{APP_CONFIG['brand_email']}</a></p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- 4. MAIN CONTENT ---
-st.title("Product Mix Analyzer")
-st.caption("Turn your raw order exports into clear bundle & cross-sell insights.")
+# --- MAIN PAGE ---
+st.title(APP_CONFIG["title"])
+st.markdown(APP_CONFIG["subtitle"])
+st.markdown(APP_CONFIG["privacy_notice"])
 
-# INSTRUCTIONS EXPANDER
-with st.expander("📖 Instructions & Export Guide", expanded=False):
-    st.markdown("""
-    ### How it works
-    1. **Upload Data:** Drag & drop your "Raw Orders" export below.
-    2. **Clean & Filter:** The tool automatically removes canceled orders and applies your "Ignore Items" rules.
-    3. **Analyze:** It generates two reports:
-        * **Order Product Mix:** Distinct product combos across all orders.
-        * **First Order Mix:** The product combo in the very first order of each customer.
-
-    ### 🛠 Export Instructions (Platform Specific)
-    """)
+# Instructions Expander
+with st.expander(APP_CONFIG["instructions_title"], expanded=False):
+    # Video Link
+    st.markdown(f"**🎥 [{APP_CONFIG['video_text']}]({APP_CONFIG['video_link']})**")
+    st.markdown("---")
+    st.markdown(APP_CONFIG["instructions_intro"])
     
     tab_shopify, tab_bc, tab_woo = st.tabs(["Shopify", "BigCommerce", "WooCommerce"])
-    
     with tab_shopify:
-        st.markdown("""
-        **Exporting from Shopify:**
-        1. Go to **Analytics → Reports** (or Orders).
-        2. Create a report with these columns: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, `Net sales`.
-        3. **Crucial:** Ensure the report is "Flat" (one row per line item).
-        4. Export as CSV.
-        """)
-        
+        st.markdown("**Exporting from Shopify:** Go to Analytics → Reports. Export a 'Flat' CSV with Order ID, Product Title, SKU, etc.")
     with tab_bc:
-        st.markdown("""
-        **Exporting from BigCommerce:**
-        1. Go to **Orders → Export**.
-        2. Use a template that includes: `Order ID`, `Date`, `Customer Email`, `SKU`, `Product Name`, `Variant Option`, `Payment Status`, `Order Status` (for cancellations), `Net Sales` (or Subtotal).
-        3. Ensure it exports "Line Items" (one row per product).
-        """)
-        
+        st.markdown("**Exporting from BigCommerce:** Go to Orders → Export. Use a template with Line Items (SKU, Product Name).")
     with tab_woo:
-        st.markdown("""
-        **Exporting from WooCommerce:**
-        1. Use **Analytics → Orders → Export** (or a CSV plugin).
-        2. Include: `order_id`, `date`, `customer_id` (or email), `line_item_sku`, `line_item_name`, `line_item_variation`, `status`, `net_total`.
-        """)
+        st.markdown("**Exporting from WooCommerce:** Use Analytics → Orders → Export with line_item fields.")
 
-    st.markdown("""
-    ### ⚠️ Technical Notes
-    * **Canceled Orders:** Lines where "Is canceled" is true/yes/1 are removed.
-    * **Payment Status:** Only `paid` and `partially_paid` are included by default.
-    * **Combos:** Quantities are ignored (buying 2x "Shirt" counts as just "Shirt").
-    """)
+    st.markdown("### Technical Notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix.")
 
-# FILE UPLOADER
-uploaded_file = st.file_uploader("Upload CSV File", type=['csv', 'xlsx'])
+st.divider()
+
+# Upload Section (Styled to be obvious)
+st.subheader("Upload Order Export")
+uploaded_file = st.file_uploader("Drag & drop CSV or Excel file here", type=['csv', 'xlsx'], label_visibility="collapsed")
 
 if uploaded_file:
-    with st.spinner("Analyzing your data..."):
+    with st.spinner("Analyzing data..."):
         try:
-            # LOAD DATA
-            if uploaded_file.name.endswith('.csv'):
-                df = pd.read_csv(uploaded_file)
-            else:
-                df = pd.read_excel(uploaded_file)
+            if uploaded_file.name.endswith('.csv'): df = pd.read_csv(uploaded_file)
+            else: df = pd.read_excel(uploaded_file)
             
-            # COLUMN MAPPING
             col_map = {}
             for key, candidates in COL_CANDIDATES.items():
                 found = find_column(df.columns, candidates)
-                if found:
-                    col_map[key] = found
+                if found: col_map[key] = found
             
-            # CRITICAL CHECK
             if 'order_id' not in col_map:
-                st.error("❌ Error: Could not detect an 'Order ID' column. Please check your headers.")
+                st.error(APP_CONFIG["error_msg"])
                 st.stop()
 
-            # RENAME & NORMALIZE
             df = df.rename(columns={v: k for k, v in col_map.items() if k in col_map})
             
-            # 1. FILTER CANCELED
             if 'canceled' in df.columns:
                 df['canceled_norm'] = df['canceled'].astype(str).str.lower()
                 df = df[~df['canceled_norm'].isin(['true', 'yes', '1', 't', 'y'])]
             
-            # 2. FILTER FINANCIAL STATUS
             if 'financial_status' in df.columns:
                 df['financial_status'] = df['financial_status'].astype(str).str.lower()
                 if INCLUDE_PAYMENT_STATUSES:
                     df = df[df['financial_status'].isin(INCLUDE_PAYMENT_STATUSES)]
 
-            # 3. PREPARE DATA
-            if 'net_sales' in df.columns:
-                df['net_sales'] = df['net_sales'].apply(parse_money)
-            else:
-                df['net_sales'] = 0.0
+            if 'net_sales' in df.columns: df['net_sales'] = df['net_sales'].apply(parse_money)
+            else: df['net_sales'] = 0.0
 
-            # 4. IGNORE LOGIC (Apply Filters)
-            # SKU Filter
             if 'sku' in df.columns and ignore_skus:
                 df = df[~df['sku'].astype(str).str.upper().isin(ignore_skus)]
-            
-            # Title Filter (Contains)
             if 'product_title' in df.columns and ignore_titles:
                 for ignore_str in ignore_titles:
                     df = df[~df['product_title'].astype(str).str.lower().str.contains(ignore_str, na=False)]
-            
-            # Variant Combo Filter (Contains)
-            if 'product_title' in df.columns:
+            if 'product_title' in df.columns and ignore_vars:
                 p_titles = df['product_title'].astype(str)
                 v_titles = df['variant_title'].astype(str) if 'variant_title' in df.columns else pd.Series([""] * len(df))
-                
-                # Create composite "Product (Variant)" for checking
                 combo_check = p_titles + " (" + v_titles + ")"
-                
-                if ignore_vars:
-                    for ignore_str in ignore_vars:
-                        # Check against composite string
-                        mask = combo_check.str.lower().str.contains(ignore_str, na=False)
-                        df = df[~mask]
+                for ignore_str in ignore_vars:
+                    df = df[~combo_check.str.lower().str.contains(ignore_str, na=False)]
 
-            # 5. IDENTIFIER GENERATION
             def get_identifier(row):
                 p = str(row.get('product_title', '')).strip()
                 v = str(row.get('variant_title', '')).strip()
                 s = str(row.get('sku', '')).strip()
-                
-                # Handle NaNs
                 if p == 'nan': p = ''
                 if v == 'nan': v = ''
                 if s == 'nan': s = ''
-
-                if id_mode == 'SKU':
-                    return s if s else p
-                elif id_mode == 'Product + Variant':
-                    return f"{p} ({v})" if v else p
-                else:
-                    return p
+                if id_mode == 'SKU': return s if s else p
+                elif id_mode == 'Product + Variant': return f"{p} ({v})" if v else p
+                else: return p
 
             df['identifier'] = df.apply(get_identifier, axis=1)
-            # Drop empty identifiers
-            df = df[df['identifier'] != '']
-            df = df[df['identifier'] != 'nan']
+            df = df[(df['identifier'] != '') & (df['identifier'] != 'nan')]
 
-            # 6. AGGREGATION
-            if 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'], utc=True, errors='coerce')
-
-            # Determine customer ID (ID > Email > Unknown)
-            if 'customer_id' not in df.columns:
-                df['customer_id'] = None
-            if 'email' not in df.columns:
-                df['email'] = None
-                
+            if 'date' in df.columns: df['date'] = pd.to_datetime(df['date'], utc=True, errors='coerce')
+            if 'customer_id' not in df.columns: df['customer_id'] = None
+            if 'email' not in df.columns: df['email'] = None
             df['final_cust_id'] = df['customer_id'].fillna(df['email']).fillna('(unknown)')
 
-            # Group by Order
             order_groups = df.groupby('order_id').agg({
-                'identifier': lambda x: sorted(list(set(x))), # Unique items, sorted
+                'identifier': lambda x: sorted(list(set(x))),
                 'net_sales': 'sum',
                 'final_cust_id': 'first',
                 'date': 'min'
             }).reset_index()
 
-            # Create Combo String
             order_groups['product_mix'] = order_groups['identifier'].apply(lambda x: ' + '.join(x))
             order_groups = order_groups[order_groups['product_mix'] != '']
 
-            # --- OUTPUT 1: ORDER PRODUCT MIX ---
-            mix_df = order_groups.groupby('product_mix').agg({
-                'order_id': 'count',
-                'net_sales': 'sum'
-            }).reset_index()
-            
+            mix_df = order_groups.groupby('product_mix').agg({'order_id': 'count', 'net_sales': 'sum'}).reset_index()
             mix_df.columns = ['product_mix', 'orders', 'net_sales']
             
             total_orders = mix_df['orders'].sum()
@@ -339,56 +317,28 @@ if uploaded_file:
             
             mix_df['% of total'] = mix_df['orders'] / total_orders
             mix_df['% of net sales'] = mix_df['net_sales'] / total_net
-            
-            # Reorder columns to match instructions: mix, orders, %, net, % net
             mix_df = mix_df[['product_mix', 'orders', '% of total', 'net_sales', '% of net sales']]
             mix_df = mix_df.sort_values('orders', ascending=False)
             
-            # --- OUTPUT 2: FIRST ORDER MIX ---
-            # Sort by date, keep first per customer
             first_orders = order_groups.sort_values('date').drop_duplicates(subset=['final_cust_id'], keep='first')
             first_orders_out = first_orders[['final_cust_id', 'order_id', 'date', 'product_mix']].copy()
             first_orders_out.columns = ['customer_id', 'first_order_id', 'first_order_date', 'first_order_product_mix']
 
-            # --- DISPLAY ---
-            st.success(f"✅ Analysis Complete! Processed {total_orders} orders.")
+            st.success(APP_CONFIG["success_msg"].format(n=total_orders))
             
-            # Metrics
             c1, c2, c3 = st.columns(3)
             c1.metric("Unique Orders", total_orders)
             c2.metric("Unique Mixes", len(mix_df))
             c3.metric("Total Net Sales", f"${total_net:,.2f}")
-            
             st.divider()
 
-            tab1, tab2 = st.tabs(["📊 Order Product Mix", "👤 First Order Mix"])
-            
+            tab1, tab2 = st.tabs(["Order Product Mix", "First Order Mix"])
             with tab1:
-                st.dataframe(
-                    mix_df.style.format({
-                        '% of total': '{:.2%}', 
-                        'net_sales': '${:,.2f}', 
-                        '% of net sales': '{:.2%}'
-                    }), 
-                    use_container_width=True,
-                    hide_index=True
-                )
-                st.download_button(
-                    "Download Order Mix CSV",
-                    mix_df.to_csv(index=False).encode('utf-8'),
-                    "order_product_mix.csv",
-                    "text/csv"
-                )
-
+                st.dataframe(mix_df.style.format({'% of total': '{:.2%}', 'net_sales': '${:,.2f}', '% of net sales': '{:.2%}'}), use_container_width=True, hide_index=True)
+                st.download_button("Download CSV", mix_df.to_csv(index=False).encode('utf-8'), "order_mix.csv", "text/csv")
             with tab2:
                 st.dataframe(first_orders_out, use_container_width=True, hide_index=True)
-                st.download_button(
-                    "Download First Order Mix CSV",
-                    first_orders_out.to_csv(index=False).encode('utf-8'),
-                    "first_order_mix.csv",
-                    "text/csv"
-                )
+                st.download_button("Download CSV", first_orders_out.to_csv(index=False).encode('utf-8'), "first_order_mix.csv", "text/csv")
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-            st.warning("Double-check that your export has the required columns (Order ID, Product Name, etc).")
