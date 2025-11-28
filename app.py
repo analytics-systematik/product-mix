@@ -134,26 +134,23 @@ with st.sidebar:
 
     st.divider()
 
-    # Systematik Branding
+    # Systematik Branding - FIXED INDENTATION TO PREVENT CODE BLOCK
     st.markdown(f"""
-    <div>
-        <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-        
-        <div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
-            <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
-        </div>
-        
-        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
-        <ul style="margin-top: 0;">
-            <li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
-            <li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
-            <li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
-        </ul>
-        
-        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
-        <a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
-    </div>
-    """, unsafe_allow_html=True)
+<div>
+<h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
+<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
+<p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
+</div>
+<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
+<ul style="margin-top: 0;">
+<li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
+<li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
+<li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
+</ul>
+<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
+<a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
+</div>
+""", unsafe_allow_html=True)
 
 # --- MAIN PAGE ---
 st.title(APP_CONFIG["title"])
