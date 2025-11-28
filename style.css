@@ -1,0 +1,87 @@
+/* Import Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&family=Outfit:wght@400;700&display=swap');
+
+/* Body Styling */
+html, body, [class*="css"] { 
+    font-family: 'Source Sans Pro', sans-serif; 
+    color: #1A1A1A; 
+    background-color: #F3F3F3;
+}
+
+/* Headers (Outfit font) */
+h1, h2, h3, h4, h5, h6 { 
+    font-family: 'Outfit', sans-serif !important; 
+    font-weight: 700; 
+    color: #1A1A1A !important; 
+}
+
+/* REDUCE TOP MARGIN */
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* GLOBAL LINK STYLING */
+a {
+    color: #7030A0 !important;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Custom Lines/Dividers */
+hr { 
+    border-color: #1A1A1A !important; 
+    opacity: 1; 
+    margin: 2em 0; 
+}
+
+/* Button Styling (Purple Pill) */
+div.stButton > button:first-child { 
+    background-color: #7030A0; 
+    color: white; 
+    border-radius: 4px; 
+    border: none; 
+    padding: 0.5em 1em; 
+    font-weight: 600; 
+}
+div.stButton > button:hover { 
+    background-color: #582480; 
+    color: white; 
+    border-color: #582480; 
+}
+
+/* Hide Streamlit Branding */
+footer {visibility: hidden;}
+#MainMenu {visibility: hidden;}
+.stDeployButton {display:none;}
+
+/* Clean up Expander */
+.streamlit-expanderHeader { 
+    font-family: 'Source Sans Pro', sans-serif; 
+    font-weight: 600; 
+    color: #1A1A1A; 
+    background-color: #F3F3F3;
+}
+
+/* Upload Box Styling */
+[data-testid="stFileUploader"] {
+    border: 1px dashed #7030A0;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #F3F3F3;
+}
+
+/* Sidebar specific tweaks */
+[data-testid="stSidebar"] {
+    background-color: #F3F3F3;
+    border-right: 1px solid #E0E0E0;
+}
+
+/* Text Input Areas (Ignore Items) - Border Styling */
+.stTextArea textarea {
+    border: 1px solid #1A1A1A !important; 
+    border-radius: 4px;
+    background-color: #FFFFFF;
+}
