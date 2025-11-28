@@ -1,0 +1,7 @@
+[theme]
+primaryColor = "#7030A0"      # Systematik Purple
+backgroundColor = "#F3F3F3"   # Light Gray Background
+secondaryBackgroundColor = "#FFFFFF" # White (Sidebar & Inputs)
+textColor = "#1A1A1A"         # Dark Text
+font = "sans serif"           # We override this with custom fonts in app.py
+base = "light"                # Forces Light Mode
