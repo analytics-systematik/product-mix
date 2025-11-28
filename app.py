@@ -8,20 +8,21 @@ import io
 APP_CONFIG = {
     "title": "Product Mix Analyzer",
     
-    # Exciting, benefit-driven description
     "subtitle": """
+    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;">
     Discover hidden revenue opportunities in your order data. 
     Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
+    </p>
     """,
     
-    "privacy_notice": "**Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
+    "privacy_notice": "🔒 **Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
     
     # Sidebar Text
     "sidebar_header": "Settings",
     "id_mode_label": "How to identify products:",
     "id_mode_help": "Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt').",
     
-    "ignore_header": "2. Ignore Items",
+    "ignore_header": "2. Ignore items",
     "ignore_caption": "Filters applied before calculating mixes (e.g., gift cards, freebies).",
     
     # Branding
@@ -30,8 +31,8 @@ APP_CONFIG = {
     "brand_email": "info@systematikdata.com",
     
     # Instructions
-    "instructions_title": "Instructions & Video Tutorial",
-    "video_link": "https://www.youtube.com", # Update this link later
+    "instructions_title": "Instructions & video tutorial",
+    "video_link": "https://www.youtube.com", 
     "video_text": "Watch the video walkthrough",
     
     "instructions_intro": """
@@ -39,11 +40,11 @@ APP_CONFIG = {
     1. Upload your "Raw Orders" export below.
     2. The tool automatically cleans the data (removes canceled orders, applies filters).
     3. You get two instant reports:
-        * **Order Product Mix:** The most popular product combinations.
-        * **First Order Mix:** What customers buy in their very first order.
+        * **Order product mix:** The most popular product combinations.
+        * **First order mix:** What customers buy in their very first order.
     """,
     
-    "success_msg": "Analysis Complete. Processed {n} orders.",
+    "success_msg": "Analysis complete. Processed {n} orders.",
     "error_msg": "Error: Could not detect an 'Order ID' column. Please check your headers."
 }
 
@@ -57,77 +58,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS: Fonts, Colors, and Clean UI
-hide_streamlit_style = """
-<style>
-    /* Import Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&family=Outfit:wght@400;700&display=swap');
-    
-    /* Body Styling */
-    html, body, [class*="css"] { 
-        font-family: 'Source Sans Pro', sans-serif; 
-        color: #1A1A1A; 
-        background-color: #F3F3F3; /* Ensure fallback color matches */
-    }
-    
-    /* Headers (Outfit font) */
-    h1, h2, h3, h4, h5, h6 { 
-        font-family: 'Outfit', sans-serif !important; 
-        font-weight: 700; 
-        color: #1A1A1A !important; 
-    }
-    
-    /* Custom Lines/Dividers */
-    hr { 
-        border-color: #1A1A1A !important; 
-        opacity: 1; 
-        margin: 2em 0; 
-    }
-    
-    /* Button Styling (Purple Pill) */
-    div.stButton > button:first-child { 
-        background-color: #7030A0; 
-        color: white; 
-        border-radius: 4px; 
-        border: none; 
-        padding: 0.5em 1em; 
-        font-weight: 600; 
-    }
-    div.stButton > button:hover { 
-        background-color: #582480; 
-        color: white; 
-        border-color: #582480; 
-    }
-    
-    /* Hide Streamlit Branding */
-    footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    .stDeployButton {display:none;}
-    
-    /* Clean up Expander */
-    .streamlit-expanderHeader { 
-        font-family: 'Source Sans Pro', sans-serif; 
-        font-weight: 600; 
-        color: #1A1A1A; 
-        background-color: #F3F3F3;
-    }
-    
-    /* Upload Box Styling - Transparent/Gray to match background */
-    [data-testid="stFileUploader"] {
-        border: 1px dashed #7030A0;
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #F3F3F3; /* Matches main background */
-    }
-    
-    /* Sidebar specific tweaks */
-    [data-testid="stSidebar"] {
-        background-color: #F3F3F3;
-        border-right: 1px solid #E0E0E0; /* Subtle separator line */
-    }
-</style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# --- LOAD EXTERNAL CSS ---
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+try:
+    local_css("style.css")
+except FileNotFoundError:
+    st.error("Error: style.css file not found. Please ensure it is in the repository.")
 
 # Constants
 INCLUDE_PAYMENT_STATUSES = ['paid', 'partially_paid']
@@ -172,7 +111,7 @@ def parse_money(val):
 with st.sidebar:
     st.header(APP_CONFIG["sidebar_header"])
     
-    st.subheader("1. Identifier Mode")
+    st.subheader("1. Identifier mode")
     id_mode = st.radio(
         APP_CONFIG["id_mode_label"],
         ('SKU', 'Product + Variant', 'Product Name'),
@@ -185,9 +124,9 @@ with st.sidebar:
     st.subheader(APP_CONFIG["ignore_header"])
     st.caption(APP_CONFIG["ignore_caption"])
     
-    ignore_skus_input = st.text_area("Ignore SKUs (Exact match)", height=80, placeholder="GIFT-CARD-001")
-    ignore_titles_input = st.text_area("Ignore Product Titles (Contains)", height=80, placeholder="Gift Card")
-    ignore_vars_input = st.text_area("Ignore 'Product (Variant)' (Contains)", height=80, placeholder="T-Shirt (Sample)")
+    ignore_skus_input = st.text_area("Ignore SKUs (exact match)", height=80, placeholder="GIFT-CARD-001")
+    ignore_titles_input = st.text_area("Ignore product titles (contains)", height=80, placeholder="Gift Card")
+    ignore_vars_input = st.text_area("Ignore 'Product (Variant)' (contains)", height=80, placeholder="T-Shirt (Sample)")
 
     ignore_skus = set(x.strip().upper() for x in ignore_skus_input.split('\n') if x.strip() and not x.strip().startswith('#'))
     ignore_titles = [x.strip().lower() for x in ignore_titles_input.split('\n') if x.strip() and not x.strip().startswith('#')]
@@ -195,48 +134,81 @@ with st.sidebar:
 
     st.divider()
 
-    # Systematik Branding (Purple)
+    # Systematik Branding
     st.markdown(f"""
-    <div style="color: #7030A0;">
-        <h3>{APP_CONFIG['brand_header']}</h3>
-        <p><strong>{APP_CONFIG['brand_info']}</strong></p>
-        <p><strong>Free Resources:</strong></p>
-        <ul>
-            <li><a href="https://systematikdata.com" style="color: #7030A0;">Automated GA4 Audit</a></li>
-            <li><a href="https://systematikdata.com" style="color: #7030A0;">Data Strategy Guide</a></li>
-            <li><a href="https://systematikdata.com" style="color: #7030A0;">Looker Studio Templates</a></li>
+    <div>
+        <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
+        
+        <div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
+            <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
+        </div>
+        
+        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
+        <ul style="margin-top: 0;">
+            <li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
+            <li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
+            <li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
         </ul>
-        <p>Need a custom build?<br>
-        <a href="mailto:{APP_CONFIG['brand_email']}" style="color: #7030A0;">{APP_CONFIG['brand_email']}</a></p>
+        
+        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
+        <a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
     </div>
     """, unsafe_allow_html=True)
 
 # --- MAIN PAGE ---
 st.title(APP_CONFIG["title"])
-st.markdown(APP_CONFIG["subtitle"])
+
+# Render subtitle with HTML enabled
+st.markdown(APP_CONFIG["subtitle"], unsafe_allow_html=True)
+
 st.markdown(APP_CONFIG["privacy_notice"])
 
 # Instructions Expander
 with st.expander(APP_CONFIG["instructions_title"], expanded=False):
     # Video Link
-    st.markdown(f"**🎥 [{APP_CONFIG['video_text']}]({APP_CONFIG['video_link']})**")
+    st.markdown(f"""
+    <a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">
+        🎥 {APP_CONFIG['video_text']}
+    </a>
+    """, unsafe_allow_html=True)
+    
     st.markdown("---")
     st.markdown(APP_CONFIG["instructions_intro"])
     
+    # Platform Specific Instructions
     tab_shopify, tab_bc, tab_woo = st.tabs(["Shopify", "BigCommerce", "WooCommerce"])
+    
     with tab_shopify:
-        st.markdown("**Exporting from Shopify:** Go to Analytics → Reports. Export a 'Flat' CSV with Order ID, Product Title, SKU, etc.")
+        st.markdown("""
+        **Exporting from Shopify (Line Items):**
+        1. Go to **Analytics → Reports**.
+        2. Create a report. Ensure fields include: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, and `Net sales`.
+        3. Export as a **CSV**. 
+        4. **Crucial:** Make sure the displayed table in Shopify is set to "Flat" (one row per line item).
+        """)
+        
     with tab_bc:
-        st.markdown("**Exporting from BigCommerce:** Go to Orders → Export. Use a template with Line Items (SKU, Product Name).")
+        st.markdown("""
+        **Exporting from BigCommerce:**
+        1. Go to **Orders → Export** (or Advanced Reporting).
+        2. Export a line-item level CSV or use a template.
+        3. Ensure it includes: `Order ID`, `Date/Time`, `Customer ID` (or Email), `SKU`, `Product Name`, `Option/Variant`, `Payment Status`, `Canceled/Refunded`, `Net Sales` (or line net).
+        """)
+        
     with tab_woo:
-        st.markdown("**Exporting from WooCommerce:** Use Analytics → Orders → Export with line_item fields.")
+        st.markdown("""
+        **Exporting from WooCommerce:**
+        1. Use **Analytics → Orders → Export** (or a CSV export plugin).
+        2. Ensure the export produces **one row per line item**.
+        3. Include fields mapping to: `order_id`, `date`, `customer_id` (or email), `line_item_sku`, `line_item_name`, `line_item_variation`, `status`, `is_canceled`, `net_total`.
+        """)
 
-    st.markdown("### Technical Notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix.")
+    st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix.")
 
 st.divider()
 
-# Upload Section (Styled to be obvious)
-st.subheader("Upload Order Export")
+# Upload Section
+st.subheader("Upload order export")
 uploaded_file = st.file_uploader("Drag & drop CSV or Excel file here", type=['csv', 'xlsx'], label_visibility="collapsed")
 
 if uploaded_file:
@@ -327,12 +299,12 @@ if uploaded_file:
             st.success(APP_CONFIG["success_msg"].format(n=total_orders))
             
             c1, c2, c3 = st.columns(3)
-            c1.metric("Unique Orders", total_orders)
-            c2.metric("Unique Mixes", len(mix_df))
-            c3.metric("Total Net Sales", f"${total_net:,.2f}")
+            c1.metric("Unique orders", total_orders)
+            c2.metric("Unique mixes", len(mix_df))
+            c3.metric("Total net sales", f"${total_net:,.2f}")
             st.divider()
 
-            tab1, tab2 = st.tabs(["Order Product Mix", "First Order Mix"])
+            tab1, tab2 = st.tabs(["Order product mix", "First order mix"])
             with tab1:
                 st.dataframe(mix_df.style.format({'% of total': '{:.2%}', 'net_sales': '${:,.2f}', '% of net sales': '{:.2%}'}), use_container_width=True, hide_index=True)
                 st.download_button("Download CSV", mix_df.to_csv(index=False).encode('utf-8'), "order_mix.csv", "text/csv")
