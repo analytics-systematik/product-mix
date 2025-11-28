@@ -15,7 +15,7 @@ APP_CONFIG = {
     </p>
     """,
     
-    "privacy_notice": "🔒 **Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
+    "privacy_notice": "🔒 Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.",
     
     # Sidebar Text
     "sidebar_header": "Settings",
@@ -165,7 +165,7 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
     # Video Link
     st.markdown(f"""
     <a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">
-        🎥 {APP_CONFIG['video_text']}
+        {APP_CONFIG['video_text']}
     </a>
     """, unsafe_allow_html=True)
     
@@ -311,3 +311,4 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
