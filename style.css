@@ -81,7 +81,7 @@ footer {visibility: hidden;}
 
 /* Text Input Areas (Ignore Items) - Border Styling */
 .stTextArea textarea {
-    border: 1px solid #1A1A1A !important; 
+    border: 1px solid #582480 !important; 
     border-radius: 4px;
-    background-color: #FFFFFF;
+    background-color: #F3F3F3;
 }
