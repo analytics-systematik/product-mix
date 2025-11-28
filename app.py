@@ -2,30 +2,79 @@ import streamlit as st
 import pandas as pd
 import io
 
-# --- 1. CONFIGURATION & SETUP ---
+# --- 1. CONFIGURATION & BRANDING ---
 st.set_page_config(
     page_title="Product Mix Analyzer",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Hide Streamlit elements for pro look
+# Custom CSS: Fonts, Colors, and Clean UI
+# Fonts: 'Outfit' (Geomanist alternative) for Headers, 'Source Sans Pro' for Body
 hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
-            """
+<style>
+    /* 1. Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&family=Outfit:wght@400;700&display=swap');
+
+    /* 2. Apply Source Sans Pro to the body/text */
+    html, body, [class*="css"] {
+        font-family: 'Source Sans Pro', sans-serif;
+        color: #1A1A1A;
+    }
+
+    /* 3. Apply the Geometric Font (Outfit) to Headers */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 700;
+        color: #1A1A1A !important;
+    }
+
+    /* 4. Custom Styling for Lines/Dividers */
+    hr {
+        border-color: #1A1A1A !important;
+        opacity: 1; /* Make sure it's solid */
+        margin: 2em 0;
+    }
+
+    /* 5. Custom Button Styling (Systematik Purple Pill) */
+    div.stButton > button:first-child {
+        background-color: #7030A0;
+        color: white;
+        border-radius: 4px;
+        border: none;
+        padding: 0.5em 1em;
+        font-weight: 600;
+    }
+    div.stButton > button:hover {
+        background-color: #582480; /* Slightly darker purple on hover */
+        color: white;
+        border-color: #582480;
+    }
+    
+    /* 6. Clean up UI (Hide Footer & Menu) */
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    .stDeployButton {display:none;}
+    
+    /* 7. Adjust Expander Borders to be cleaner */
+    .streamlit-expanderHeader {
+        font-family: 'Source Sans Pro', sans-serif;
+        font-weight: 600;
+        color: #1A1A1A;
+    }
+</style>
+"""
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Constants & Config
 INCLUDE_PAYMENT_STATUSES = ['paid', 'partially_paid']
 
-# Expanded Column Candidates based on your Instructions
+# Expanded Column Candidates
 COL_CANDIDATES = {
     'order_id': ['order id', 'name', 'order', 'order number', 'order_id'],
     'customer_id': ['customer id', 'customer_id', 'customer'],
-    'email': ['customer email', 'email', 'customer_email', 'billing_email'], # Fallback for ID
+    'email': ['customer email', 'email', 'customer_email', 'billing_email'],
     'date': ['created at', 'created_at', 'processed at', 'order date', 'day', 'date', 'hour', 'time'],
     'product_title': ['product title', 'lineitem name', 'title', 'product name', 'line_item_name'],
     'variant_title': ['product variant title', 'variant title', 'variant', 'lineitem variant', 'line_item_variation', 'option'],
@@ -217,7 +266,6 @@ if uploaded_file:
                     df = df[~df['product_title'].astype(str).str.lower().str.contains(ignore_str, na=False)]
             
             # Variant Combo Filter (Contains)
-            # Construct temporary composite string for filtering: "Title (Variant)"
             if 'product_title' in df.columns:
                 p_titles = df['product_title'].astype(str)
                 v_titles = df['variant_title'].astype(str) if 'variant_title' in df.columns else pd.Series([""] * len(df))
