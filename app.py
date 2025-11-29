@@ -39,13 +39,12 @@ Instantly see which products your customers actually buy together and identify t
     "video_link": "https://www.youtube.com", 
     "video_text": "Watch the video walkthrough",
     
-    # UPDATED: Removed "**How it works**" from here so we can place the video above the list
     "instructions_intro": """
-    1. Upload your "Raw Orders" export below.
-    2. The tool automatically cleans the data (removes canceled orders, applies filters).
-    3. You get two instant reports:
-        * **Order product mix:** The most popular product combinations.
-        * **First order mix:** What customers buy in their very first order.
+1. Upload your "Raw Orders" export below.
+2. The tool automatically cleans the data (removes canceled orders, applies filters).
+3. You get two instant reports:
+    * **Order product mix:** The most popular product combinations.
+    * **First order mix:** What customers buy in their very first order.
     """,
     
     "success_msg": "Analysis complete. Processed {n} orders.",
@@ -238,12 +237,27 @@ st.title(APP_CONFIG["title"])
 st.markdown(APP_CONFIG["subtitle"], unsafe_allow_html=True)
 st.markdown(APP_CONFIG["privacy_notice"])
 
+# Instructions Expander
 with st.expander(APP_CONFIG["instructions_title"], expanded=False):
-    st.markdown(f"""<a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">{APP_CONFIG['video_text']}</a>""", unsafe_allow_html=True)
-    st.markdown("---")
+    # 1. Header (Manually placed at the top)
+    st.markdown("### How it works")
+    
+    # 2. Video Link (Manually placed BELOW header, ABOVE list)
+    st.markdown(f"""
+    <a href="{APP_CONFIG['video_link']}" style="color: #7030A0; font-weight: bold; font-size: 1.1em; display: inline-block; margin-bottom: 15px; text-decoration: none;">
+        {APP_CONFIG['video_text']}
+    </a>
+    """, unsafe_allow_html=True)
+    
+    # 3. Numbered List (From Config)
     st.markdown(APP_CONFIG["instructions_intro"])
     
+    # 4. Divider Line (Separating instructions from platform tabs)
+    st.markdown("---")
+    
+    # Platform Specific Instructions
     tab_shopify, tab_bc, tab_woo = st.tabs(["Shopify", "BigCommerce", "WooCommerce"])
+    
     with tab_shopify:
         st.markdown("""
         **Exporting from Shopify:**
@@ -252,10 +266,13 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
         3. Export as a **CSV**. 
         4. **Crucial:** Make sure the displayed table in Shopify is set to "Flat" (one row per line item).
         """)
+        
     with tab_bc:
         st.markdown("**Exporting from BigCommerce:** Orders -> Export. Template with Line Items.")
+        
     with tab_woo:
         st.markdown("**Exporting from WooCommerce:** Analytics -> Orders -> Export with line_item fields.")
+
     st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored unless enabled in sidebar.")
 
 st.divider()
@@ -405,6 +422,7 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
 
 
