@@ -9,7 +9,8 @@ APP_CONFIG = {
     "title": "Product Mix Analyzer",
     
     "subtitle": """
-    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;"> 
+    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;">
+    Discover hidden revenue opportunities in your order data. 
     Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
     </p>
     """,
@@ -21,9 +22,8 @@ APP_CONFIG = {
     "id_mode_label": "How to identify products:",
     "id_mode_help": "Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt').",
     
-    # Quantity Toggle Text
     "qty_mode_label": "Differentiate by quantity",
-    "qty_mode_help": "If checked, buying 2 items counts as a different mix than buying 1 item (e.g. '2x Shirt' vs '1x Shirt'). Uncheck to treat them the same.",
+    "qty_mode_help": "If checked, buying 2 items counts as a different mix than buying 1 item. Uncheck to treat them the same.",
     
     "ignore_header": "2. Ignore items",
     "ignore_caption": "Filters applied before calculating mixes (e.g., gift cards, freebies).",
@@ -111,6 +111,60 @@ def parse_money(val):
     try: return float(s)
     except: return 0.0
 
+# --- EXCEL GENERATOR ---
+def convert_to_excel(df, report_type):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        # Write df starting at Row 4
+        df.to_excel(writer, index=False, startrow=3, sheet_name='Report')
+        
+        workbook = writer.book
+        worksheet = writer.sheets['Report']
+        
+        from openpyxl.styles import Font, Alignment
+        
+        bold_font = Font(bold=True, name='Arial', size=11)
+        regular_font = Font(name='Arial', size=10)
+        purple_link_font = Font(name='Arial', size=10, color="7030A0", underline="single")
+        header_font = Font(bold=True, name='Arial', size=14)
+        text_align = Alignment(wrap_text=True, vertical='top')
+        
+        def write_side_block(row, title, text, link=None):
+            cell_title = worksheet[f'H{row}']
+            cell_title.value = title
+            cell_title.font = bold_font
+            
+            cell_text = worksheet[f'H{row+1}']
+            cell_text.value = text
+            cell_text.font = regular_font if not link else purple_link_font
+            cell_text.alignment = text_align
+            if link: cell_text.hyperlink = link
+
+        worksheet['H3'] = "SYSTEMATIK DATA — PRODUCT MIX REPORT"
+        worksheet['H3'].font = header_font
+        worksheet['H4'] = f"Report: {report_type} | Date: {pd.Timestamp.now().strftime('%Y-%m-%d')}"
+        worksheet['H4'].font = regular_font
+
+        write_side_block(6, "1. WHAT THIS REPORT SHOWS", 
+                         "This table groups your historical orders to reveal unique product combinations.")
+        write_side_block(10, "2. ACTIONABLE STRATEGIES", 
+                         "• Create 'Power Bundles'\n• Smart Email Flows\n• Inventory Planning")
+        write_side_block(16, "3. GO DEEPER (ADVANCED ANALYTICS)", 
+                         "Calculate LTV by First Order Mix to find your best customers.")
+        write_side_block(20, "4. TIRED OF MANUAL EXPORTS?", 
+                         "We can build you a live, automated dashboard that refreshes this data daily.")
+        write_side_block(23, "⚡ POWERED BY SYSTEMATIK", 
+                         "Full-stack data agency for ecommerce brands ($5M-$100M).")
+        write_side_block(25, "Book a strategy call", "info@systematikdata.com", link="mailto:info@systematikdata.com")
+        write_side_block(26, "Visit our website", "systematikdata.com", link="https://systematikdata.com")
+
+        worksheet.column_dimensions['H'].width = 60
+        worksheet.column_dimensions['F'].width = 5
+        worksheet.column_dimensions['G'].width = 5
+        for col in ['A', 'B', 'C', 'D', 'E']: worksheet.column_dimensions[col].width = 20
+
+    return output.getvalue()
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.header(APP_CONFIG["sidebar_header"])
@@ -123,7 +177,6 @@ with st.sidebar:
         help=APP_CONFIG["id_mode_help"]
     )
     
-    # Quantity Toggle
     use_quantity = st.checkbox(
         APP_CONFIG["qty_mode_label"],
         value=False,
@@ -145,11 +198,10 @@ with st.sidebar:
 
     st.divider()
 
-    # Systematik Branding - NO INDENTATION to avoid code block rendering
     st.markdown(f"""
 <div>
 <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
 <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
 </div>
 <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
@@ -165,57 +217,24 @@ with st.sidebar:
 
 # --- MAIN PAGE ---
 st.title(APP_CONFIG["title"])
-
-# Render subtitle with HTML enabled
 st.markdown(APP_CONFIG["subtitle"], unsafe_allow_html=True)
-
 st.markdown(APP_CONFIG["privacy_notice"])
 
-# Instructions Expander
 with st.expander(APP_CONFIG["instructions_title"], expanded=False):
-    # Video Link
-    st.markdown(f"""
-    <a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">
-        🎥 {APP_CONFIG['video_text']}
-    </a>
-    """, unsafe_allow_html=True)
-    
+    st.markdown(f"""<a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">🎥 {APP_CONFIG['video_text']}</a>""", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown(APP_CONFIG["instructions_intro"])
     
-    # Platform Specific Instructions
     tab_shopify, tab_bc, tab_woo = st.tabs(["Shopify", "BigCommerce", "WooCommerce"])
-    
     with tab_shopify:
-        st.markdown("""
-        **Exporting from Shopify (Line Items):**
-        1. Go to **Analytics → Reports**.
-        2. Create a report. Ensure fields include: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, `Net sales` and `Quantity`.
-        3. Export as a **CSV**. 
-        4. **Crucial:** Make sure the displayed table in Shopify is set to "Flat" (one row per line item).
-        """)
-        
+        st.markdown("**Exporting from Shopify:** Analytics -> Reports. 'Flat' CSV with Order ID, Line Items.")
     with tab_bc:
-        st.markdown("""
-        **Exporting from BigCommerce:**
-        1. Go to **Orders → Export** (or Advanced Reporting).
-        2. Export a line-item level CSV or use a template.
-        3. Ensure it includes: `Order ID`, `Date/Time`, `Customer ID` (or Email), `SKU`, `Product Name`, `Option/Variant`, `Payment Status`, `Canceled/Refunded`, `Net Sales` (or line net), `Quantity`.
-        """)
-        
+        st.markdown("**Exporting from BigCommerce:** Orders -> Export. Template with Line Items.")
     with tab_woo:
-        st.markdown("""
-        **Exporting from WooCommerce:**
-        1. Use **Analytics → Orders → Export** (or a CSV export plugin).
-        2. Ensure the export produces **one row per line item**.
-        3. Include fields mapping to: `order_id`, `date`, `customer_id` (or email), `line_item_sku`, `line_item_name`, `line_item_variation`, `status`, `is_canceled`, `net_total`, `quantity`.
-        """)
-
-    st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix unless the 'Differentiate by quantity' setting is enabled.")
+        st.markdown("**Exporting from WooCommerce:** Analytics -> Orders -> Export with line_item fields.")
+    st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored unless enabled in sidebar.")
 
 st.divider()
-
-# Upload Section
 st.subheader("Upload order export")
 uploaded_file = st.file_uploader("Drag & drop CSV or Excel file here", type=['csv', 'xlsx'], label_visibility="collapsed")
 
@@ -239,32 +258,25 @@ if uploaded_file:
             if 'canceled' in df.columns:
                 df['canceled_norm'] = df['canceled'].astype(str).str.lower()
                 df = df[~df['canceled_norm'].isin(['true', 'yes', '1', 't', 'y'])]
-            
             if 'financial_status' in df.columns:
                 df['financial_status'] = df['financial_status'].astype(str).str.lower()
-                if INCLUDE_PAYMENT_STATUSES:
-                    df = df[df['financial_status'].isin(INCLUDE_PAYMENT_STATUSES)]
+                if INCLUDE_PAYMENT_STATUSES: df = df[df['financial_status'].isin(INCLUDE_PAYMENT_STATUSES)]
 
             if 'net_sales' in df.columns: df['net_sales'] = df['net_sales'].apply(parse_money)
             else: df['net_sales'] = 0.0
             
-            # Quantity handling
             if 'quantity' in df.columns: 
                 df['quantity'] = pd.to_numeric(df['quantity'], errors='coerce').fillna(1).astype(int)
-            else:
-                df['quantity'] = 1
+            else: df['quantity'] = 1
 
-            if 'sku' in df.columns and ignore_skus:
-                df = df[~df['sku'].astype(str).str.upper().isin(ignore_skus)]
+            if 'sku' in df.columns and ignore_skus: df = df[~df['sku'].astype(str).str.upper().isin(ignore_skus)]
             if 'product_title' in df.columns and ignore_titles:
-                for ignore_str in ignore_titles:
-                    df = df[~df['product_title'].astype(str).str.lower().str.contains(ignore_str, na=False)]
+                for ignore_str in ignore_titles: df = df[~df['product_title'].astype(str).str.lower().str.contains(ignore_str, na=False)]
             if 'product_title' in df.columns and ignore_vars:
                 p_titles = df['product_title'].astype(str)
                 v_titles = df['variant_title'].astype(str) if 'variant_title' in df.columns else pd.Series([""] * len(df))
                 combo_check = p_titles + " (" + v_titles + ")"
-                for ignore_str in ignore_vars:
-                    df = df[~combo_check.str.lower().str.contains(ignore_str, na=False)]
+                for ignore_str in ignore_vars: df = df[~combo_check.str.lower().str.contains(ignore_str, na=False)]
 
             def get_identifier(row):
                 p = str(row.get('product_title', '')).strip()
@@ -273,15 +285,10 @@ if uploaded_file:
                 if p == 'nan': p = ''
                 if v == 'nan': v = ''
                 if s == 'nan': s = ''
-                
-                # Base identifier
                 base_id = p
                 if id_mode == 'SKU': base_id = s if s else p
                 elif id_mode == 'Product + Variant': base_id = f"{p} ({v})" if v else p
-                
-                # Add quantity if enabled
-                if use_quantity and row['quantity'] > 1:
-                    return f"{row['quantity']}x {base_id}"
+                if use_quantity and row['quantity'] > 1: return f"{row['quantity']}x {base_id}"
                 return base_id
 
             df['identifier'] = df.apply(get_identifier, axis=1)
@@ -292,19 +299,14 @@ if uploaded_file:
             if 'email' not in df.columns: df['email'] = None
             df['final_cust_id'] = df['customer_id'].fillna(df['email']).fillna('(unknown)')
 
-            # LOGIC UPDATE: Handle quantity aggregation
             order_groups = df.groupby('order_id').agg({
-                'identifier': lambda x: sorted(list(x)), # Keep duplicates if quantity matters
+                'identifier': lambda x: sorted(list(x)),
                 'net_sales': 'sum',
                 'final_cust_id': 'first',
                 'date': 'min'
             }).reset_index()
 
-            # Helper to deduplicate if quantity disabled, or keep if quantity embedded in string
             def create_mix_string(items):
-                # items is a list like ['1x Shirt', '1x Hat'] or ['Shirt', 'Hat']
-                # If using quantity mode, the string "2x Shirt" is unique, so simple dedup works.
-                # If NOT using quantity mode, we might see ['Shirt', 'Shirt'] -> we want just 'Shirt'
                 unique_items = sorted(list(set(items)))
                 return ' + '.join(unique_items)
 
@@ -312,37 +314,64 @@ if uploaded_file:
             order_groups = order_groups[order_groups['product_mix'] != '']
 
             mix_df = order_groups.groupby('product_mix').agg({'order_id': 'count', 'net_sales': 'sum'}).reset_index()
-            mix_df.columns = ['product_mix', 'orders', 'net_sales']
+            mix_df.columns = ['Product mix', 'Orders', 'Net sales']
             
-            total_orders = mix_df['orders'].sum()
-            total_net = mix_df['net_sales'].sum()
+            total_orders = mix_df['Orders'].sum()
+            total_net = mix_df['Net sales'].sum()
             
-            mix_df['% of total'] = mix_df['orders'] / total_orders
-            mix_df['% of net sales'] = mix_df['net_sales'] / total_net
-            mix_df = mix_df[['product_mix', 'orders', '% of total', 'net_sales', '% of net sales']]
-            mix_df = mix_df.sort_values('orders', ascending=False)
+            mix_df['% of total'] = mix_df['Orders'] / total_orders
+            mix_df['% of net sales'] = mix_df['Net sales'] / total_net
+            mix_df = mix_df[['Product mix', 'Orders', '% of total', 'Net sales', '% of net sales']]
+            mix_df = mix_df.sort_values('Orders', ascending=False)
             
             first_orders = order_groups.sort_values('date').drop_duplicates(subset=['final_cust_id'], keep='first')
             first_orders_out = first_orders[['final_cust_id', 'order_id', 'date', 'product_mix']].copy()
-            first_orders_out.columns = ['customer_id', 'first_order_id', 'first_order_date', 'first_order_product_mix']
+            first_orders_out.columns = ['Customer ID', 'First order ID', 'First order date', 'First order product mix']
 
             st.success(APP_CONFIG["success_msg"].format(n=total_orders))
             
+            # --- METRICS SECTION (Bold, Formatted, No Divider) ---
             c1, c2, c3 = st.columns(3)
-            c1.metric("Unique orders", total_orders)
-            c2.metric("Unique mixes", len(mix_df))
+            # Using F-strings to add commas to numbers and currency
+            c1.metric("Unique orders", f"{total_orders:,}")
+            c2.metric("Unique mixes", f"{len(mix_df):,}")
             c3.metric("Total net sales", f"${total_net:,.2f}")
-            st.divider()
-
+            
+            # --- DATA TABS ---
             tab1, tab2 = st.tabs(["Order product mix", "First order mix"])
+            
+            # --- HEADER STYLING CONFIG ---
+            # We apply this style to the dataframe to make headers Dark Gray
+            header_styles = [
+                {'selector': 'th', 'props': [
+                    ('background-color', '#1A1A1A'), 
+                    ('color', '#F3F3F3'), 
+                    ('font-weight', 'bold')
+                ]}
+            ]
+
             with tab1:
-                st.dataframe(mix_df.style.format({'% of total': '{:.2%}', 'net_sales': '${:,.2f}', '% of net sales': '{:.2%}'}), use_container_width=True, hide_index=True)
-                st.download_button("Download CSV", mix_df.to_csv(index=False).encode('utf-8'), "order_mix.csv", "text/csv")
+                # Apply styling and format values
+                st.dataframe(
+                    mix_df.style.set_table_styles(header_styles).format({
+                        '% of total': '{:.2%}', 
+                        'Net sales': '${:,.2f}', 
+                        '% of net sales': '{:.2%}'
+                    }), 
+                    use_container_width=True, 
+                    hide_index=True
+                )
+                excel_data = convert_to_excel(mix_df, "Order Product Mix")
+                st.download_button("Download Excel Report", excel_data, "order_mix_branded.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                
             with tab2:
-                st.dataframe(first_orders_out, use_container_width=True, hide_index=True)
-                st.download_button("Download CSV", first_orders_out.to_csv(index=False).encode('utf-8'), "first_order_mix.csv", "text/csv")
+                st.dataframe(
+                    first_orders_out.style.set_table_styles(header_styles), 
+                    use_container_width=True, 
+                    hide_index=True
+                )
+                excel_data_first = convert_to_excel(first_orders_out, "First Order Mix")
+                st.download_button("Download Excel Report", excel_data_first, "first_order_mix_branded.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-
-
