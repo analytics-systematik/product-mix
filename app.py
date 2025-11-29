@@ -8,12 +8,13 @@ import io
 APP_CONFIG = {
     "title": "Product Mix Analyzer",
     
+    # INDENTATION STRIPPED to prevent code blocks
     "subtitle": """
-    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;">
-    Discover hidden revenue opportunities in your order data. 
-    Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
-    </p>
-    """,
+<p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;">
+Discover hidden revenue opportunities in your order data. 
+Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
+</p>
+""",
     
     "privacy_notice": "🔒 **Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
     
@@ -39,13 +40,13 @@ APP_CONFIG = {
     "video_text": "Watch the video walkthrough",
     
     "instructions_intro": """
-    **How it works**
-    1. Upload your "Raw Orders" export below.
-    2. The tool automatically cleans the data (removes canceled orders, applies filters).
-    3. You get two instant reports:
-        * **Order product mix:** The most popular product combinations.
-        * **First order mix:** What customers buy in their very first order.
-    """,
+**How it works**
+1. Upload your "Raw Orders" export below.
+2. The tool automatically cleans the data (removes canceled orders, applies filters).
+3. You get two instant reports:
+    * **Order product mix:** The most popular product combinations.
+    * **First order mix:** What customers buy in their very first order.
+""",
     
     "success_msg": "Analysis complete. Processed {n} orders.",
     "error_msg": "Error: Could not detect an 'Order ID' column. Please check your headers."
@@ -122,7 +123,7 @@ def convert_to_excel(df, report_type):
             df_export[col] = df_export[col].dt.tz_localize(None)
 
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        # 1. Write the DataFrame starting at Row 1 (index 0)
+        # Write df starting at Row 1 (Index 0)
         df_export.to_excel(writer, index=False, startrow=0, sheet_name='Report')
         
         workbook = writer.book
@@ -130,15 +131,12 @@ def convert_to_excel(df, report_type):
         
         from openpyxl.styles import Font, Alignment
         
-        # Styles
         bold_font = Font(bold=True, name='Arial', size=11)
         regular_font = Font(name='Arial', size=10)
         purple_link_font = Font(name='Arial', size=10, color="7030A0", underline="single")
         header_font = Font(bold=True, name='Arial', size=14)
         text_align = Alignment(wrap_text=True, vertical='top')
         
-        # Helper to write side content
-        # Targeted column is J
         def write_side_block(row, title, text, link=None):
             cell_title = worksheet[f'J{row}']
             cell_title.value = title
@@ -150,34 +148,27 @@ def convert_to_excel(df, report_type):
             cell_text.alignment = text_align
             if link: cell_text.hyperlink = link
 
-        # --- WRITE CONTENT (Sentence Case, Full Copy) ---
-        
-        # Main Title (J1)
+        # --- WRITE CONTENT (Column J) ---
         worksheet['J1'] = "Systematik data — Product mix report"
         worksheet['J1'].font = header_font
         
         worksheet['J2'] = f"Report: {report_type} | Date: {pd.Timestamp.now().strftime('%Y-%m-%d')}"
         worksheet['J2'].font = regular_font
 
-        # Section 1
         write_side_block(4, "1. What this report shows", 
                          "This table groups your historical orders to reveal unique product combinations. It tells you exactly which items are purchased together and how much revenue those specific combinations generate.")
         
-        # Section 2 - Detailed Copy
         write_side_block(8, "2. Actionable strategies", 
                          "• Create 'Power Bundles': If specific items (e.g., 'Shampoo + Conditioner') are bought together frequently, create a one-click bundle with a slight discount to increase AOV.\n"
                          "• Smart email flows: If a customer buys 'Item A' but not 'Item B' (and your data shows they usually go together), trigger a specific cross-sell email flow 3 days later.\n"
                          "• Inventory planning: Use high-volume mixes to predict demand. If you run a promo on 'Item A', ensure you have enough stock of its pair, 'Item B'.")
         
-        # Section 3
         write_side_block(16, "3. Go deeper (advanced analytics)", 
                          "Want to know which customers are worth the most? Try calculating LTV (Lifetime Value) by First Order Mix. You might find that customers who start with 'Bundle X' are worth 3x more than those who start with 'Product Y'.")
         
-        # Section 4
         write_side_block(20, "4. Tired of manual exports?", 
                          "This report is a snapshot in time. We can build you a live, automated dashboard that refreshes this data daily, letting you track bundle performance in real-time without spreadsheets.")
         
-        # Footer
         write_side_block(23, "⚡ Powered by Systematik", 
                          "Full-stack data agency for ecommerce brands ($5M-$100M).")
         
@@ -185,15 +176,9 @@ def convert_to_excel(df, report_type):
         write_side_block(26, "Visit our website", "systematikdata.com", link="https://systematikdata.com")
 
         # Layout Adjustments
-        worksheet.column_dimensions['J'].width = 70 # Wide content column
-        
-        # Buffer columns F, G, H, I (narrow)
-        for col in ['F', 'G', 'H', 'I']:
-            worksheet.column_dimensions[col].width = 5
-            
-        # Data columns A-E
-        for col in ['A', 'B', 'C', 'D', 'E']:
-             worksheet.column_dimensions[col].width = 20
+        worksheet.column_dimensions['J'].width = 70
+        for col in ['F', 'G', 'H', 'I']: worksheet.column_dimensions[col].width = 5
+        for col in ['A', 'B', 'C', 'D', 'E']: worksheet.column_dimensions[col].width = 20
 
     return output.getvalue()
 
@@ -230,6 +215,7 @@ with st.sidebar:
 
     st.divider()
 
+    # BRANDING - Flush Left to avoid code blocks
     st.markdown(f"""
 <div>
 <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
@@ -259,7 +245,13 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
     
     tab_shopify, tab_bc, tab_woo = st.tabs(["Shopify", "BigCommerce", "WooCommerce"])
     with tab_shopify:
-        st.markdown("**Exporting from Shopify:** Analytics -> Reports. 'Flat' CSV with Order ID, Line Items.")
+        st.markdown("""
+        **Exporting from Shopify:**
+        1. Go to **Analytics → Reports**.
+        2. Create a report. Ensure fields include: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, `Net sales`.
+        3. Export as a **CSV**. 
+        4. **Crucial:** Make sure the displayed table in Shopify is set to "Flat" (one row per line item).
+        """)
     with tab_bc:
         st.markdown("**Exporting from BigCommerce:** Orders -> Export. Template with Line Items.")
     with tab_woo:
