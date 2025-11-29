@@ -85,3 +85,9 @@ footer {visibility: hidden;}
     border-radius: 4px;
     background-color: #F3F3F3;
 }
+
+/* --- FORCE TABLE HEADER STYLING --- */
+th {
+    background-color: #1A1A1A !important;
+    color: #F3F3F3 !important;
+}
