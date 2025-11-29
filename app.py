@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import io
-from collections import Counter
 
 # ==========================================
 # TEXT CONFIGURATION
@@ -23,7 +22,7 @@ APP_CONFIG = {
     "id_mode_label": "How to identify products:",
     "id_mode_help": "Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt').",
     
-    # NEW: Quantity Toggle Text
+    # Quantity Toggle Text
     "qty_mode_label": "Differentiate by quantity",
     "qty_mode_help": "If checked, buying 2 items counts as a different mix than buying 1 item (e.g. '2x Shirt' vs '1x Shirt'). Uncheck to treat them the same.",
     
@@ -84,7 +83,7 @@ COL_CANDIDATES = {
     'variant_title': ['product variant title', 'variant title', 'variant', 'lineitem variant', 'line_item_variation', 'option'],
     'sku': ['product variant sku', 'variant sku', 'sku', 'lineitem sku', 'line_item_sku'],
     'net_sales': ['net sales', 'total sales', 'total price', 'net_total', 'net revenue'],
-    'quantity': ['lineitem quantity', 'quantity', 'qty', 'count'], # Added for quantity logic
+    'quantity': ['lineitem quantity', 'quantity', 'qty', 'count'],
     'financial_status': ['order payment status', 'financial status', 'payment status', 'order_status'],
     'canceled': ['is canceled order', 'cancelled', 'canceled', 'is_canceled', 'is_cancelled']
 }
@@ -125,7 +124,7 @@ with st.sidebar:
         help=APP_CONFIG["id_mode_help"]
     )
     
-    # NEW: Quantity Toggle
+    # Quantity Toggle
     use_quantity = st.checkbox(
         APP_CONFIG["qty_mode_label"],
         value=False,
@@ -147,28 +146,23 @@ with st.sidebar:
 
     st.divider()
 
-    # Systematik Branding
+    # Systematik Branding - NO INDENTATION to avoid code block rendering
     st.markdown(f"""
-    <div>
-        <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-        
-        <!-- Light Purple Background Box -->
-        <div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
-            <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
-        </div>
-        
-        <!-- Regular Text Color Headers -->
-        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
-        <ul style="margin-top: 0;">
-            <li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
-            <li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
-            <li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
-        </ul>
-        
-        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
-        <a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
-    </div>
-    """, unsafe_allow_html=True)
+<div>
+<h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
+<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
+<p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
+</div>
+<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
+<ul style="margin-top: 0;">
+<li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
+<li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
+<li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
+</ul>
+<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
+<a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
+</div>
+""", unsafe_allow_html=True)
 
 # --- MAIN PAGE ---
 st.title(APP_CONFIG["title"])
@@ -301,7 +295,7 @@ if uploaded_file:
 
             # LOGIC UPDATE: Handle quantity aggregation
             order_groups = df.groupby('order_id').agg({
-                'identifier': lambda x: sorted(list(x)), # Keep duplicates if quantity matters, but simple list for now
+                'identifier': lambda x: sorted(list(x)), # Keep duplicates if quantity matters
                 'net_sales': 'sum',
                 'final_cust_id': 'first',
                 'date': 'min'
