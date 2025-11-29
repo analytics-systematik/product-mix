@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import io
+from collections import Counter
 
 # ==========================================
 # TEXT CONFIGURATION
@@ -15,12 +16,16 @@ APP_CONFIG = {
     </p>
     """,
     
-    "privacy_notice": "🔒 Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.",
+    "privacy_notice": "🔒 **Your data is safe. The analysis runs entirely in this secure session — we never see, store, or save your files.**",
     
     # Sidebar Text
     "sidebar_header": "Settings",
     "id_mode_label": "How to identify products:",
     "id_mode_help": "Determines how items are named in the mix (e.g. 'Red Shirt' vs 'Shirt').",
+    
+    # NEW: Quantity Toggle Text
+    "qty_mode_label": "Differentiate by quantity",
+    "qty_mode_help": "If checked, buying 2 items counts as a different mix than buying 1 item (e.g. '2x Shirt' vs '1x Shirt'). Uncheck to treat them the same.",
     
     "ignore_header": "2. Ignore items",
     "ignore_caption": "Filters applied before calculating mixes (e.g., gift cards, freebies).",
@@ -79,6 +84,7 @@ COL_CANDIDATES = {
     'variant_title': ['product variant title', 'variant title', 'variant', 'lineitem variant', 'line_item_variation', 'option'],
     'sku': ['product variant sku', 'variant sku', 'sku', 'lineitem sku', 'line_item_sku'],
     'net_sales': ['net sales', 'total sales', 'total price', 'net_total', 'net revenue'],
+    'quantity': ['lineitem quantity', 'quantity', 'qty', 'count'], # Added for quantity logic
     'financial_status': ['order payment status', 'financial status', 'payment status', 'order_status'],
     'canceled': ['is canceled order', 'cancelled', 'canceled', 'is_canceled', 'is_cancelled']
 }
@@ -119,6 +125,13 @@ with st.sidebar:
         help=APP_CONFIG["id_mode_help"]
     )
     
+    # NEW: Quantity Toggle
+    use_quantity = st.checkbox(
+        APP_CONFIG["qty_mode_label"],
+        value=False,
+        help=APP_CONFIG["qty_mode_help"]
+    )
+    
     st.divider()
     
     st.subheader(APP_CONFIG["ignore_header"])
@@ -134,23 +147,28 @@ with st.sidebar:
 
     st.divider()
 
-    # Systematik Branding - FIXED INDENTATION TO PREVENT CODE BLOCK
+    # Systematik Branding
     st.markdown(f"""
-<div>
-<h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-<p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
-</div>
-<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
-<ul style="margin-top: 0;">
-<li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
-<li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
-<li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
-</ul>
-<p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
-<a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
-</div>
-""", unsafe_allow_html=True)
+    <div>
+        <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
+        
+        <!-- Light Purple Background Box -->
+        <div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
+            <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
+        </div>
+        
+        <!-- Regular Text Color Headers -->
+        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
+        <ul style="margin-top: 0;">
+            <li><a href="https://systematikdata.com">Automated GA4 Audit</a></li>
+            <li><a href="https://systematikdata.com">Data Strategy Guide</a></li>
+            <li><a href="https://systematikdata.com">Looker Studio Templates</a></li>
+        </ul>
+        
+        <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
+        <a href="mailto:{APP_CONFIG['brand_email']}">{APP_CONFIG['brand_email']}</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- MAIN PAGE ---
 st.title(APP_CONFIG["title"])
@@ -165,7 +183,7 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
     # Video Link
     st.markdown(f"""
     <a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">
-        {APP_CONFIG['video_text']}
+        🎥 {APP_CONFIG['video_text']}
     </a>
     """, unsafe_allow_html=True)
     
@@ -179,7 +197,7 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
         st.markdown("""
         **Exporting from Shopify (Line Items):**
         1. Go to **Analytics → Reports**.
-        2. Create a report. Ensure fields include: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, and `Net sales`.
+        2. Create a report. Ensure fields include: `Order id`, `Customer id` (or email), `Created at`, `Product title`, `Product variant title`, `Product variant sku`, `Order payment status`, `Is canceled order`, `Net sales` and `Quantity`.
         3. Export as a **CSV**. 
         4. **Crucial:** Make sure the displayed table in Shopify is set to "Flat" (one row per line item).
         """)
@@ -189,7 +207,7 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
         **Exporting from BigCommerce:**
         1. Go to **Orders → Export** (or Advanced Reporting).
         2. Export a line-item level CSV or use a template.
-        3. Ensure it includes: `Order ID`, `Date/Time`, `Customer ID` (or Email), `SKU`, `Product Name`, `Option/Variant`, `Payment Status`, `Canceled/Refunded`, `Net Sales` (or line net).
+        3. Ensure it includes: `Order ID`, `Date/Time`, `Customer ID` (or Email), `SKU`, `Product Name`, `Option/Variant`, `Payment Status`, `Canceled/Refunded`, `Net Sales` (or line net), `Quantity`.
         """)
         
     with tab_woo:
@@ -197,10 +215,10 @@ with st.expander(APP_CONFIG["instructions_title"], expanded=False):
         **Exporting from WooCommerce:**
         1. Use **Analytics → Orders → Export** (or a CSV export plugin).
         2. Ensure the export produces **one row per line item**.
-        3. Include fields mapping to: `order_id`, `date`, `customer_id` (or email), `line_item_sku`, `line_item_name`, `line_item_variation`, `status`, `is_canceled`, `net_total`.
+        3. Include fields mapping to: `order_id`, `date`, `customer_id` (or email), `line_item_sku`, `line_item_name`, `line_item_variation`, `status`, `is_canceled`, `net_total`, `quantity`.
         """)
 
-    st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix.")
+    st.markdown("### Technical notes\n* Canceled orders are removed.\n* Only `paid`/`partially_paid` included.\n* Quantities are ignored in mix unless the 'Differentiate by quantity' setting is enabled.")
 
 st.divider()
 
@@ -236,6 +254,12 @@ if uploaded_file:
 
             if 'net_sales' in df.columns: df['net_sales'] = df['net_sales'].apply(parse_money)
             else: df['net_sales'] = 0.0
+            
+            # Quantity handling
+            if 'quantity' in df.columns: 
+                df['quantity'] = pd.to_numeric(df['quantity'], errors='coerce').fillna(1).astype(int)
+            else:
+                df['quantity'] = 1
 
             if 'sku' in df.columns and ignore_skus:
                 df = df[~df['sku'].astype(str).str.upper().isin(ignore_skus)]
@@ -256,9 +280,16 @@ if uploaded_file:
                 if p == 'nan': p = ''
                 if v == 'nan': v = ''
                 if s == 'nan': s = ''
-                if id_mode == 'SKU': return s if s else p
-                elif id_mode == 'Product + Variant': return f"{p} ({v})" if v else p
-                else: return p
+                
+                # Base identifier
+                base_id = p
+                if id_mode == 'SKU': base_id = s if s else p
+                elif id_mode == 'Product + Variant': base_id = f"{p} ({v})" if v else p
+                
+                # Add quantity if enabled
+                if use_quantity and row['quantity'] > 1:
+                    return f"{row['quantity']}x {base_id}"
+                return base_id
 
             df['identifier'] = df.apply(get_identifier, axis=1)
             df = df[(df['identifier'] != '') & (df['identifier'] != 'nan')]
@@ -268,14 +299,23 @@ if uploaded_file:
             if 'email' not in df.columns: df['email'] = None
             df['final_cust_id'] = df['customer_id'].fillna(df['email']).fillna('(unknown)')
 
+            # LOGIC UPDATE: Handle quantity aggregation
             order_groups = df.groupby('order_id').agg({
-                'identifier': lambda x: sorted(list(set(x))),
+                'identifier': lambda x: sorted(list(x)), # Keep duplicates if quantity matters, but simple list for now
                 'net_sales': 'sum',
                 'final_cust_id': 'first',
                 'date': 'min'
             }).reset_index()
 
-            order_groups['product_mix'] = order_groups['identifier'].apply(lambda x: ' + '.join(x))
+            # Helper to deduplicate if quantity disabled, or keep if quantity embedded in string
+            def create_mix_string(items):
+                # items is a list like ['1x Shirt', '1x Hat'] or ['Shirt', 'Hat']
+                # If using quantity mode, the string "2x Shirt" is unique, so simple dedup works.
+                # If NOT using quantity mode, we might see ['Shirt', 'Shirt'] -> we want just 'Shirt'
+                unique_items = sorted(list(set(items)))
+                return ' + '.join(unique_items)
+
+            order_groups['product_mix'] = order_groups['identifier'].apply(create_mix_string)
             order_groups = order_groups[order_groups['product_mix'] != '']
 
             mix_df = order_groups.groupby('product_mix').agg({'order_id': 'count', 'net_sales': 'sum'}).reset_index()
@@ -311,5 +351,3 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-
-
