@@ -159,9 +159,9 @@ def convert_to_excel(df, report_type):
                          "This table groups your historical orders to reveal unique product combinations. It tells you exactly which items are purchased together and how much revenue those specific combinations generate.")
         
         write_side_block(8, "2. Actionable strategies", 
-                         "• Create 'Power Bundles': If specific items (e.g., 'Shampoo + Conditioner') are bought together frequently, create a one-click bundle with a slight discount to increase AOV.\n"
-                         "• Smart email flows: If a customer buys 'Item A' but not 'Item B' (and your data shows they usually go together), trigger a specific cross-sell email flow 3 days later.\n"
-                         "• Inventory planning: Use high-volume mixes to predict demand. If you run a promo on 'Item A', ensure you have enough stock of its pair, 'Item B'.")
+                         "**• Create 'Power Bundles':** If specific items (e.g., 'Shampoo + Conditioner') are bought together frequently, create a one-click bundle with a slight discount to increase AOV.\n"
+                         "**• Smart email flows:** If a customer buys 'Item A' but not 'Item B' (and your data shows they usually go together), trigger a specific cross-sell email flow 3 days later.\n"
+                         "**• Inventory planning:** Use high-volume mixes to predict demand. If you run a promo on 'Item A', ensure you have enough stock of its pair, 'Item B'.")
         
         write_side_block(16, "3. Go deeper (advanced analytics)", 
                          "Want to know which customers are worth the most? Try calculating LTV (Lifetime Value) by First Order Mix. You might find that customers who start with 'Bundle X' are worth 3x more than those who start with 'Product Y'.")
@@ -169,10 +169,9 @@ def convert_to_excel(df, report_type):
         write_side_block(20, "4. Tired of manual exports?", 
                          "This report is a snapshot in time. We can build you a live, automated dashboard that refreshes this data daily, letting you track bundle performance in real-time without spreadsheets.")
         
-        write_side_block(23, "⚡ Powered by Systematik", 
+        write_side_block(23, "Powered by Systematik", 
                          "Full-stack data agency for ecommerce brands ($5M-$100M).")
         
-        write_side_block(25, "Book a strategy call", "info@systematikdata.com", link="mailto:info@systematikdata.com")
         write_side_block(26, "Visit our website", "systematikdata.com", link="https://systematikdata.com")
 
         # Layout Adjustments
@@ -219,7 +218,7 @@ with st.sidebar:
     st.markdown(f"""
 <div>
 <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
+<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
 <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
 </div>
 <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
@@ -239,7 +238,7 @@ st.markdown(APP_CONFIG["subtitle"], unsafe_allow_html=True)
 st.markdown(APP_CONFIG["privacy_notice"])
 
 with st.expander(APP_CONFIG["instructions_title"], expanded=False):
-    st.markdown(f"""<a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">🎥 {APP_CONFIG['video_text']}</a>""", unsafe_allow_html=True)
+    st.markdown(f"""<a href="{APP_CONFIG['video_link']}" style="font-weight: bold; font-size: 1.1em;">{APP_CONFIG['video_text']}</a>""", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown(APP_CONFIG["instructions_intro"])
     
@@ -405,3 +404,4 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
