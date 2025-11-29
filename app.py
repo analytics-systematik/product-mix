@@ -34,19 +34,19 @@ Instantly see which products your customers actually buy together and identify t
     "brand_info": "Full-stack data agency for ecommerce brands earning $5M-100M annually.",
     "brand_email": "info@systematikdata.com",
     
-    # Instructions
+# Instructions
     "instructions_title": "Instructions & video tutorial",
     "video_link": "https://www.youtube.com", 
     "video_text": "Watch the video walkthrough",
     
+    # UPDATED: Removed "**How it works**" from here so we can place the video above the list
     "instructions_intro": """
-**How it works**
-1. Upload your "Raw Orders" export below.
-2. The tool automatically cleans the data (removes canceled orders, applies filters).
-3. You get two instant reports:
-    * **Order product mix:** The most popular product combinations.
-    * **First order mix:** What customers buy in their very first order.
-""",
+    1. Upload your "Raw Orders" export below.
+    2. The tool automatically cleans the data (removes canceled orders, applies filters).
+    3. You get two instant reports:
+        * **Order product mix:** The most popular product combinations.
+        * **First order mix:** What customers buy in their very first order.
+    """,
     
     "success_msg": "Analysis complete. Processed {n} orders.",
     "error_msg": "Error: Could not detect an 'Order ID' column. Please check your headers."
@@ -404,4 +404,5 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
