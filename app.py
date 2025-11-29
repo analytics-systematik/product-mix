@@ -9,8 +9,7 @@ APP_CONFIG = {
     "title": "Product Mix Analyzer",
     
     "subtitle": """
-    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;">
-    Discover hidden revenue opportunities in your order data. 
+    <p style="font-size: 20px; line-height: 1.5; color: #1A1A1A; margin-bottom: 20px;"> 
     Instantly see which products your customers actually buy together and identify the exact items that hook new customers on their first purchase.
     </p>
     """,
@@ -345,3 +344,4 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
