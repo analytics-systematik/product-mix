@@ -225,6 +225,7 @@ with st.sidebar:
 <li><a href="https://go.systematikdata.com/yII40H">Automated GA4 Audit</a></li>
 <li><a href="https://go.systematikdata.com/DyF1js">Data Strategy Guide</a></li>
 <li><a href="https://go.systematikdata.com/rWECQ1">Looker Studio Templates</a></li>
+<li><a href="https://go.systematikdata.com/wWBg5K">Customer Enricher</a></li>
 <li><a href="https://go.systematikdata.com/DtiYck">See all..</a></li>
 </ul>
 <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Need a custom build?</p>
@@ -422,6 +423,7 @@ if uploaded_file:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
 
 
