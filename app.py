@@ -114,54 +114,86 @@ def parse_money(val):
 # --- EXCEL GENERATOR ---
 def convert_to_excel(df, report_type):
     output = io.BytesIO()
+    
+    # Remove Timezone info from any datetime columns
+    df_export = df.copy()
+    for col in df_export.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_export[col]):
+            df_export[col] = df_export[col].dt.tz_localize(None)
+
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        # Write df starting at Row 4
-        df.to_excel(writer, index=False, startrow=3, sheet_name='Report')
+        # 1. Write the DataFrame starting at Row 1 (index 0)
+        df_export.to_excel(writer, index=False, startrow=0, sheet_name='Report')
         
         workbook = writer.book
         worksheet = writer.sheets['Report']
         
         from openpyxl.styles import Font, Alignment
         
+        # Styles
         bold_font = Font(bold=True, name='Arial', size=11)
         regular_font = Font(name='Arial', size=10)
         purple_link_font = Font(name='Arial', size=10, color="7030A0", underline="single")
         header_font = Font(bold=True, name='Arial', size=14)
         text_align = Alignment(wrap_text=True, vertical='top')
         
+        # Helper to write side content
+        # Targeted column is J
         def write_side_block(row, title, text, link=None):
-            cell_title = worksheet[f'H{row}']
+            cell_title = worksheet[f'J{row}']
             cell_title.value = title
             cell_title.font = bold_font
             
-            cell_text = worksheet[f'H{row+1}']
+            cell_text = worksheet[f'J{row+1}']
             cell_text.value = text
             cell_text.font = regular_font if not link else purple_link_font
             cell_text.alignment = text_align
             if link: cell_text.hyperlink = link
 
-        worksheet['H3'] = "SYSTEMATIK DATA — PRODUCT MIX REPORT"
-        worksheet['H3'].font = header_font
-        worksheet['H4'] = f"Report: {report_type} | Date: {pd.Timestamp.now().strftime('%Y-%m-%d')}"
-        worksheet['H4'].font = regular_font
+        # --- WRITE CONTENT (Sentence Case, Full Copy) ---
+        
+        # Main Title (J1)
+        worksheet['J1'] = "Systematik data — Product mix report"
+        worksheet['J1'].font = header_font
+        
+        worksheet['J2'] = f"Report: {report_type} | Date: {pd.Timestamp.now().strftime('%Y-%m-%d')}"
+        worksheet['J2'].font = regular_font
 
-        write_side_block(6, "1. WHAT THIS REPORT SHOWS", 
-                         "This table groups your historical orders to reveal unique product combinations.")
-        write_side_block(10, "2. ACTIONABLE STRATEGIES", 
-                         "• Create 'Power Bundles'\n• Smart Email Flows\n• Inventory Planning")
-        write_side_block(16, "3. GO DEEPER (ADVANCED ANALYTICS)", 
-                         "Calculate LTV by First Order Mix to find your best customers.")
-        write_side_block(20, "4. TIRED OF MANUAL EXPORTS?", 
-                         "We can build you a live, automated dashboard that refreshes this data daily.")
-        write_side_block(23, "⚡ POWERED BY SYSTEMATIK", 
+        # Section 1
+        write_side_block(4, "1. What this report shows", 
+                         "This table groups your historical orders to reveal unique product combinations. It tells you exactly which items are purchased together and how much revenue those specific combinations generate.")
+        
+        # Section 2 - Detailed Copy
+        write_side_block(8, "2. Actionable strategies", 
+                         "• Create 'Power Bundles': If specific items (e.g., 'Shampoo + Conditioner') are bought together frequently, create a one-click bundle with a slight discount to increase AOV.\n"
+                         "• Smart email flows: If a customer buys 'Item A' but not 'Item B' (and your data shows they usually go together), trigger a specific cross-sell email flow 3 days later.\n"
+                         "• Inventory planning: Use high-volume mixes to predict demand. If you run a promo on 'Item A', ensure you have enough stock of its pair, 'Item B'.")
+        
+        # Section 3
+        write_side_block(16, "3. Go deeper (advanced analytics)", 
+                         "Want to know which customers are worth the most? Try calculating LTV (Lifetime Value) by First Order Mix. You might find that customers who start with 'Bundle X' are worth 3x more than those who start with 'Product Y'.")
+        
+        # Section 4
+        write_side_block(20, "4. Tired of manual exports?", 
+                         "This report is a snapshot in time. We can build you a live, automated dashboard that refreshes this data daily, letting you track bundle performance in real-time without spreadsheets.")
+        
+        # Footer
+        write_side_block(23, "⚡ Powered by Systematik", 
                          "Full-stack data agency for ecommerce brands ($5M-$100M).")
+        
         write_side_block(25, "Book a strategy call", "info@systematikdata.com", link="mailto:info@systematikdata.com")
         write_side_block(26, "Visit our website", "systematikdata.com", link="https://systematikdata.com")
 
-        worksheet.column_dimensions['H'].width = 60
-        worksheet.column_dimensions['F'].width = 5
-        worksheet.column_dimensions['G'].width = 5
-        for col in ['A', 'B', 'C', 'D', 'E']: worksheet.column_dimensions[col].width = 20
+        # Layout Adjustments
+        worksheet.column_dimensions['J'].width = 70 # Wide content column
+        
+        # Buffer columns F, G, H, I (narrow)
+        for col in ['F', 'G', 'H', 'I']:
+            worksheet.column_dimensions[col].width = 5
+            
+        # Data columns A-E
+        for col in ['A', 'B', 'C', 'D', 'E']:
+             worksheet.column_dimensions[col].width = 20
 
     return output.getvalue()
 
@@ -201,7 +233,7 @@ with st.sidebar:
     st.markdown(f"""
 <div>
 <h3 style="color: #7030A0; font-family: 'Outfit', sans-serif;">{APP_CONFIG['brand_header']}</h3>
-<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+<div style="background-color: #F2E6FF; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #7030A0;">
 <p style="margin: 0; color: #1A1A1A; font-weight: 600;">{APP_CONFIG['brand_info']}</p>
 </div>
 <p style="margin-bottom: 5px; color: #1A1A1A; font-weight: 700;">Free resources:</p>
@@ -294,7 +326,18 @@ if uploaded_file:
             df['identifier'] = df.apply(get_identifier, axis=1)
             df = df[(df['identifier'] != '') & (df['identifier'] != 'nan')]
 
-            if 'date' in df.columns: df['date'] = pd.to_datetime(df['date'], utc=True, errors='coerce')
+            # --- DATE LOGIC FOR FILENAME ---
+            try:
+                if 'date' in df.columns: 
+                    df['date'] = pd.to_datetime(df['date'], utc=True, errors='coerce')
+                    min_date = df['date'].min().strftime('%Y-%m-%d')
+                    max_date = df['date'].max().strftime('%Y-%m-%d')
+                    filename_suffix = f"{min_date} to {max_date}"
+                else:
+                    filename_suffix = "analysis"
+            except:
+                filename_suffix = "analysis"
+
             if 'customer_id' not in df.columns: df['customer_id'] = None
             if 'email' not in df.columns: df['email'] = None
             df['final_cust_id'] = df['customer_id'].fillna(df['email']).fillna('(unknown)')
@@ -330,18 +373,14 @@ if uploaded_file:
 
             st.success(APP_CONFIG["success_msg"].format(n=total_orders))
             
-            # --- METRICS SECTION (Bold, Formatted, No Divider) ---
             c1, c2, c3 = st.columns(3)
-            # Using F-strings to add commas to numbers and currency
             c1.metric("Unique orders", f"{total_orders:,}")
             c2.metric("Unique mixes", f"{len(mix_df):,}")
             c3.metric("Total net sales", f"${total_net:,.2f}")
             
-            # --- DATA TABS ---
             tab1, tab2 = st.tabs(["Order product mix", "First order mix"])
             
-            # --- HEADER STYLING CONFIG ---
-            # We apply this style to the dataframe to make headers Dark Gray
+            # Header styling for display table
             header_styles = [
                 {'selector': 'th', 'props': [
                     ('background-color', '#1A1A1A'), 
@@ -351,7 +390,6 @@ if uploaded_file:
             ]
 
             with tab1:
-                # Apply styling and format values
                 st.dataframe(
                     mix_df.style.set_table_styles(header_styles).format({
                         '% of total': '{:.2%}', 
@@ -361,8 +399,8 @@ if uploaded_file:
                     use_container_width=True, 
                     hide_index=True
                 )
-                excel_data = convert_to_excel(mix_df, "Order Product Mix")
-                st.download_button("Download Excel Report", excel_data, "order_mix_branded.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                excel_data = convert_to_excel(mix_df, "Order product mix")
+                st.download_button("Download Excel report", excel_data, f"Product mix - {filename_suffix}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 
             with tab2:
                 st.dataframe(
@@ -370,9 +408,8 @@ if uploaded_file:
                     use_container_width=True, 
                     hide_index=True
                 )
-                excel_data_first = convert_to_excel(first_orders_out, "First Order Mix")
-                st.download_button("Download Excel Report", excel_data_first, "first_order_mix_branded.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                excel_data_first = convert_to_excel(first_orders_out, "First order mix")
+                st.download_button("Download Excel report", excel_data_first, f"First order mix - {filename_suffix}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-
